@@ -1,0 +1,7 @@
+const ROLE = {
+    DWELLER: "DWELLER",
+    LEADER: "LEADER",
+    MEMBER_SENATE: "MEMBER_SENATE"
+}
+
+exports.ROLE = ROLE
