@@ -1,21 +1,19 @@
-const User = require("./User");
-
 class Room {
-    #id
-    #name
+    #room
     #isOpen
     #isLobby
     #users
 
-    constructor(name, isOpen, isLobby, users, id) {
-        this.#id = id
-        this.#name = name
+    constructor(room, isOpen, isLobby, users) {
+        this.#room = room
         this.#isOpen = isOpen
         this.#isLobby = isLobby
-        this.#users = users.map((user) => new User(user))
+        this.#users = users
     }
 
     setIsOpen(isOpen) {
+        if (this.#isLobby) return
+
         this.#isOpen = isOpen
     }
 
@@ -33,14 +31,10 @@ class Room {
         this.#users = this.#users.filter(user => user.getUserState().id !== userId);
     }
 
-    getUsers() {
-        return this.#users;
-    }
-
     getRoomState() {
         return {
-            id: this.#id,
-            name: this.#name,
+            id: this.#room.id,
+            name: this.#room.name,
             isOpen: this.#isOpen,
             isLobby: this.#isLobby,
             usersNum: this.#users.length

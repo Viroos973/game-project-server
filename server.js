@@ -2,7 +2,7 @@ const express = require('express');
 const {userAuthorize, setUsername} = require("./controller/user.controller");
 const app = express();
 const server = require('http').createServer(app);
-const sequelize = require( './database');
+const {sequelize} = require( './models/index');
 const crypto = require('crypto');
 const jwt = require("jsonwebtoken");
 const Colony = require("./core/Colony");
@@ -86,7 +86,7 @@ function joinRoom(socket, roomId) {
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "https://z6e8h2-95-191-10-201.ru.tuna.am",
+        origin: "https://gsudta-95-191-10-201.ru.tuna.am",
         methods: ["GET", "POST"],
     },
 })
@@ -188,7 +188,11 @@ io.on('connection', socket => {
 
                 const gameRoom = uuidV4()
                 const users = getUsersInRoom(room)
-                const colony = new Colony("Грибной", "Очень опасный", users, room);
+                const apocalypse = {
+                    name: "Грибной",
+                    description: "Очень страшный апокалипсис"
+                }
+                const colony = new Colony(apocalypse, users, room);
 
                 users.forEach(user => {
                     const userSocket = io.sockets.sockets.get(user.socketId);

@@ -1,24 +1,23 @@
-const sequelize = require( '../database');
+const sequelize = require("../database");
 const {DataTypes} = require('sequelize');
 
-const User = sequelize.define(
-    'User',
+const Apocalypses = sequelize.define(
+    'Apocalypses',
     {
         id: {
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
-        username: {
+        name: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        telegramId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            unique: true
-        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        }
     }
 )
 
-module.exports = User
+module.exports = Apocalypses;
