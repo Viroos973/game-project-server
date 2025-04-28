@@ -13,8 +13,11 @@ class Characteristic {
 
     getCharacteristicState() {
         return {
-            characteristic: this.#characteristic,
+            type: this.#characteristic.type,
+            name: this.#characteristic.name,
             isOpen: this.#isOpen
         }
     }
 }
+
+module.exports = Characteristic

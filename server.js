@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const jwt = require("jsonwebtoken");
 const Colony = require("./core/Colony");
 const {v4: uuidV4} = require('uuid');
+const getRandomApocalypse = require("./controller/apocalypse.controller");
 
 const port = process.env.PORT || 3001;
 const botToken = '7796741487:AAGnjAdgirV00MJ15YWupb3Dg4X7x4R0rE0';
@@ -86,7 +87,7 @@ function joinRoom(socket, roomId) {
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "https://gsudta-95-191-10-201.ru.tuna.am",
+        origin: "https://0wqaq4-95-191-10-201.ru.tuna.am",
         methods: ["GET", "POST"],
     },
 })
@@ -183,16 +184,16 @@ io.on('connection', socket => {
                 leaveRoom(socket, room)
             });
 
-            socket.on('create-game', () => {
+            socket.on('create-game', async () => {
                 io.to(room).emit('start-game');
 
                 const gameRoom = uuidV4()
                 const users = getUsersInRoom(room)
-                const apocalypse = {
-                    name: "Грибной",
-                    description: "Очень страшный апокалипсис"
-                }
-                const colony = new Colony(apocalypse, users, room);
+                const apocalypse = await getRandomApocalypse()
+
+                const colony = new Colony(apocalypse);
+                await colony.createUsers(users)
+                await colony.createRooms(room)
 
                 users.forEach(user => {
                     const userSocket = io.sockets.sockets.get(user.socketId);

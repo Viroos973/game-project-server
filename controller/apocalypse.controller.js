@@ -6,9 +6,15 @@ const getRandomApocalypse = async() => {
 
         if (count > 0) {
             const random = Math.floor(Math.random() * count);
-            return await Apocalypse.findOne({
+            const apocalypse = await Apocalypse.findOne({
                 offset: random
             })
+
+            return {
+                id: apocalypse.id,
+                name: apocalypse.name,
+                description: apocalypse.description
+            }
         } else {
             throw {
                 code: 404,

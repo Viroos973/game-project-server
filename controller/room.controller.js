@@ -3,27 +3,24 @@ const Room = require("../models/room.model");
 const getRandomRooms = async() => {
     try {
         const count = await Room.count();
-        const limit = 5;
+        const limit = 4;
 
-        if (count > 0) {
-            const offsets = new Set();
+        const offsets = Array.from({ length: Math.min(limit, count) }, () =>
+            Math.floor(Math.random() * count)
+        );
 
-            while (offsets.size < Math.min(limit, count)) {
-                const randomOffset = Math.floor(Math.random() * count);
-                offsets.add(randomOffset);
+        const rooms = await Promise.all(
+            offsets.map(offset =>
+                Room.findOne({ offset })
+            )
+        );
+
+        return rooms.map(room => {
+            return {
+                typeId: room.id,
+                name: room.name
             }
-
-            return await Promise.all(
-                [...offsets].map(offset =>
-                    Room.findOne({ offset })
-                )
-            );
-        } else {
-            throw {
-                code: 404,
-                message: "Apocalypse not found"
-            };
-        }
+        })
     } catch (err) {
         throw {
             code: 500,

@@ -1,35 +1,50 @@
 const {v4: uuidV4} = require('uuid');
 const Room = require("./Room");
 const User = require("./User");
+const getRandomRooms = require("../controller/room.controller");
 
 class Colony {
     #apocalypse
     #rooms
     #users
 
-    constructor(apocalypse, users, lobbyId) {
+    constructor(apocalypse) {
         this.#apocalypse = apocalypse;
-        this.#users = users.map((user) => new User(user))
-        this.#rooms = this.#createRooms(users, lobbyId)
+        this.#users = []
+        this.#rooms = []
     }
 
-    #createRooms(users, lobbyId) {
-        const rooms = []
-        const lobby = new Room({ name: "lobby", id: lobbyId }, true, true, this.#users)
+    async createRooms(lobbyId) {
+        try {
+            const rooms = []
 
-        rooms.push(lobby)
+            const lobby = new Room(lobbyId, { id: null, name: "Лобби" }, true, true, this.#users)
+            rooms.push(lobby)
 
-        for (let i = 0; i < 5; i++) {
-            const randomIsOpen = Math.random() < 0.5;
-            const room = {
-                name: "room",
-                id: uuidV4()
+            const typeRooms = await getRandomRooms()
+            for (const room of typeRooms) {
+                const randomIsOpen = Math.random() < 0.5;
+                const voiceId = uuidV4();
+                rooms.push(new Room(voiceId, room, randomIsOpen, false, []));
             }
 
-            rooms.push(new Room(room, randomIsOpen, false, []));
+            this.#rooms = rooms;
+        } catch (e) {
+            console.error("Room creation error: " + e.message)
         }
+    }
 
-        return rooms;
+    async createUsers(users) {
+        try {
+            const userPromises = users.map(async (item) => {
+                const user = new User(item);
+                await user.createCharacteristic();
+                return user;
+            });
+            this.#users = await Promise.all(userPromises);
+        } catch (e) {
+            console.error("User creation error: " + e.message)
+        }
     }
 
     getUser(userId) {
@@ -60,7 +75,8 @@ class Colony {
         return {
             apocalypse: this.#apocalypse.name,
             descriptionApocalypse: this.#apocalypse.description,
-            rooms: this.#rooms.map((room) => room.getRoomState())
+            rooms: this.#rooms.map((room) => room.getRoomState()),
+            users: this.#users.map((user) => user.getUserState())
         }
     }
 }

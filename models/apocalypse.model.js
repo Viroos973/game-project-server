@@ -17,6 +17,9 @@ const Apocalypses = sequelize.define(
             type: DataTypes.TEXT,
             allowNull: false
         }
+    },
+    {
+        timestamps: false,
     }
 )
 

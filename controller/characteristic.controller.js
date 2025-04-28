@@ -1,10 +1,10 @@
-const Characteristic = require("../models/characteristic.model");
+const Characteristics = require("../models/characteristic.model");
 const ApocalypseCharacteristic = require("../models/apocalypseCharacteristic.model")
 const RoomCharacteristic = require("../models/roomCharacteristic.model")
 
 const getRandomCharacteristic = async(typeCharacteristic) => {
     try {
-        const count = await Characteristic.count({
+        const count = await Characteristics.count({
             where: {
                 type: typeCharacteristic
             }
@@ -12,16 +12,22 @@ const getRandomCharacteristic = async(typeCharacteristic) => {
 
         if (count > 0) {
             const random = Math.floor(Math.random() * count);
-            return await Characteristic.findOne({
+            const characteristic = await Characteristics.findOne({
                 where: {
                     type: typeCharacteristic
                 },
                 offset: random
             })
+
+            return {
+                id: characteristic.id,
+                type: characteristic.type,
+                name: characteristic.name
+            }
         } else {
             throw {
                 code: 404,
-                message: "Apocalypse not found"
+                message: "Characteristic not found"
             };
         }
     } catch (err) {
@@ -34,7 +40,7 @@ const getRandomCharacteristic = async(typeCharacteristic) => {
 
 const getApocalypseCharacteristic = async(isGood, apocalypseId) => {
     try {
-        const characteristics = await Characteristic.findAll({
+        const characteristics = await Characteristics.findAll({
             include: [{
                 model: ApocalypseCharacteristic,
                 where: {
@@ -48,8 +54,8 @@ const getApocalypseCharacteristic = async(isGood, apocalypseId) => {
         if (characteristics.length > 0) {
             return characteristics.map(characteristic => {
                 return {
-                    type: characteristic.type,
-                    name: characteristic.name
+                    id: characteristic.id,
+                    type: characteristic.type
                 }
             })
         } else {
@@ -68,7 +74,7 @@ const getApocalypseCharacteristic = async(isGood, apocalypseId) => {
 
 const getRoomCharacteristic = async(isGood, roomId) => {
     try {
-        const characteristics = await Characteristic.findAll({
+        const characteristics = await Characteristics.findAll({
             include: [{
                 model: RoomCharacteristic,
                 where: {
@@ -82,8 +88,8 @@ const getRoomCharacteristic = async(isGood, roomId) => {
         if (characteristics.length > 0) {
             return characteristics.map(characteristic => {
                 return {
-                    type: characteristic.type,
-                    name: characteristic.name
+                    id: characteristic.id,
+                    type: characteristic.type
                 }
             })
         } else {

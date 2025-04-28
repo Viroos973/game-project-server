@@ -32,6 +32,9 @@ const ApocalypseCharacteristic = sequelize.define(
             type: DataTypes.BOOLEAN,
             allowNull: false
         }
+    },
+    {
+        timestamps: false,
     }
 )
 

@@ -17,6 +17,9 @@ const Characteristics = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false
         }
+    },
+    {
+        timestamps: false,
     }
 )
 

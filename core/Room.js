@@ -1,10 +1,12 @@
 class Room {
+    #voiceId
     #room
     #isOpen
     #isLobby
     #users
 
-    constructor(room, isOpen, isLobby, users) {
+    constructor(voiceId, room, isOpen, isLobby, users) {
+        this.#voiceId = voiceId;
         this.#room = room
         this.#isOpen = isOpen
         this.#isLobby = isLobby
@@ -33,7 +35,7 @@ class Room {
 
     getRoomState() {
         return {
-            id: this.#room.id,
+            id: this.#voiceId,
             name: this.#room.name,
             isOpen: this.#isOpen,
             isLobby: this.#isLobby,
