@@ -33,6 +33,10 @@ class Room {
         this.#users = this.#users.filter(user => user.getUserState().id !== userId);
     }
 
+    deleteAllUsers() {
+        this.#users = []
+    }
+
     getRoomState() {
         return {
             id: this.#voiceId,

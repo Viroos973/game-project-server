@@ -47,6 +47,10 @@ class Colony {
         }
     }
 
+    getLobbyState() {
+        return this.#rooms[0].getRoomState();
+    }
+
     getUser(userId) {
         for (const user of this.#users) {
             const userState = user.getUserState()
@@ -69,6 +73,18 @@ class Colony {
         }
 
         return null
+    }
+
+    moveAllToLobby() {
+        const lobby = this.#rooms[0]
+
+        for (const room of this.#rooms) {
+            room.deleteAllUsers()
+        }
+
+        for (const user of this.#users) {
+            lobby.addUser(user)
+        }
     }
 
     getStateColony() {

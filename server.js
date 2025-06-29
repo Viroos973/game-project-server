@@ -10,7 +10,7 @@ const {v4: uuidV4} = require('uuid');
 const getRandomApocalypse = require("./controller/apocalypse.controller");
 
 const port = process.env.PORT || 3001;
-const botToken = '7796741487:AAGnjAdgirV00MJ15YWupb3Dg4X7x4R0rE0';
+const botToken = '7617931336:AAGUCDHAvEqflVhuNcFXXglQdeB6mG022x0';
 
 function getUsersInRoom(roomId) {
     const room = io.sockets.adapter.rooms.get(roomId);
@@ -87,7 +87,7 @@ function joinRoom(socket, roomId) {
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "https://0wqaq4-95-191-10-201.ru.tuna.am",
+        origin: "https://0weevh-95-191-10-201.ru.tuna.am",
         methods: ["GET", "POST"],
     },
 })
@@ -184,6 +184,20 @@ io.on('connection', socket => {
                 leaveRoom(socket, room)
             });
 
+            socket.on('activate-voting', () => {
+                const colony = socket.colony;
+                const lobbyState = colony.getLobbyState();
+
+                colony.moveAllToLobby()
+
+                leaveRoom(socket, room);
+                joinRoom(socket, lobbyState.id);
+
+                socket.emit('set-state-colony', colony.getStateColony());
+                socket.emit('restart-timer', 2, true)
+                room = lobbyState.id;
+            })
+
             socket.on('create-game', async () => {
                 io.to(room).emit('start-game');
 
@@ -194,6 +208,7 @@ io.on('connection', socket => {
                 const colony = new Colony(apocalypse);
                 await colony.createUsers(users)
                 await colony.createRooms(room)
+                const stateColony = colony.getStateColony();
 
                 users.forEach(user => {
                     const userSocket = io.sockets.sockets.get(user.socketId);
@@ -201,10 +216,26 @@ io.on('connection', socket => {
                         userSocket.join(gameRoom);
                         userSocket.gameRoom = gameRoom;
                         userSocket.colony = colony;
+
+                        const userStateColony = {
+                            ...stateColony,
+                            users: stateColony.users.map(userState =>
+                                userState.id === user.socketId
+                                    ? userState
+                                    : {
+                                        ...userState,
+                                        characteristics: userState.characteristics.map(ch =>
+                                            !ch.isOpen
+                                                ? { ...ch, name: "Скрыто" }
+                                                : ch
+                                        )
+                                    }
+                            )
+                        };
+
+                        userSocket.emit('set-state-colony', userStateColony)
                     }
                 });
-
-                io.to(room).emit('set-state-colony', colony.getStateColony());
             })
         } else {
             console.log("verification failed");
