@@ -47,6 +47,10 @@ class Colony {
         }
     }
 
+    getUsers() {
+        return this.#users;
+    }
+
     getLobbyState() {
         return this.#rooms[0].getRoomState();
     }

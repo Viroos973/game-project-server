@@ -7,6 +7,8 @@ class User {
     #id
     #name
     #role
+    #votes
+    #isVoted
     #characteristics
 
     constructor(user) {
@@ -14,6 +16,8 @@ class User {
         this.#name = user.username
         this.#role = ROLE.DWELLER
         this.#characteristics = []
+        this.#votes = 0
+        this.#isVoted = false
     }
 
     async createCharacteristic() {
@@ -33,6 +37,26 @@ class User {
         }
     }
 
+    setIsVoted(isVoted) {
+        this.#isVoted = isVoted;
+    }
+
+    getIsVoted() {
+        return this.#isVoted;
+    }
+
+    getVotes() {
+        return this.#votes;
+    }
+
+    vote() {
+        this.#votes += 1;
+    }
+
+    resetVotes() {
+        this.#votes = 0;
+    }
+
     setRole(role) {
         this.#role = role
     }
@@ -42,7 +66,8 @@ class User {
             id: this.#id,
             name: this.#name,
             role: this.#role,
-            characteristics: this.#characteristics.map(characteristic => characteristic.getCharacteristicState())
+            characteristics: this.#characteristics.map(characteristic => characteristic.getCharacteristicState()),
+            isVoted: this.#isVoted
         }
     }
 }

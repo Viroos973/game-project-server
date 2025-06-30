@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const Colony = require("./core/Colony");
 const {v4: uuidV4} = require('uuid');
 const getRandomApocalypse = require("./controller/apocalypse.controller");
+const {ROLE} = require("./const/roles");
 
 const port = process.env.PORT || 3001;
 const botToken = '7617931336:AAGUCDHAvEqflVhuNcFXXglQdeB6mG022x0';
@@ -24,6 +25,63 @@ function getUsersInRoom(roomId) {
             username: s.username || 'Anonymous',
             socketId: socketId
         };
+    });
+}
+
+function getStateForUser(colony, userSocket) {
+    const stateColony = colony.getStateColony();
+
+    return {
+        ...stateColony,
+        users: stateColony.users.map(userState =>
+            userState.id === userSocket.id
+                ? userState
+                : {
+                    ...userState,
+                    characteristics: userState.characteristics.map(ch =>
+                        !ch.isOpen
+                            ? { ...ch, name: "Скрыто" }
+                            : ch
+                    )
+                }
+        )
+    };
+}
+
+function endVoting(users, socket) {
+    io.to(socket.gameRoom).emit('stop-activity');
+
+    let leaders = [];
+    let maxVotes = -1;
+    let leader;
+
+    for (const user of users) {
+        user.setRole(ROLE.DWELLER)
+
+        if (maxVotes < user.getVotes()) {
+            maxVotes = user.getVotes()
+            leaders = [user]
+        } else if (maxVotes === user.getVotes()) {
+            leaders.push(user)
+        }
+
+        user.resetVotes()
+    }
+
+    if (leaders.length === 1) {
+        leader = leaders[0];
+    } else if (leaders.length > 1) {
+        leader = leaders[Math.floor(Math.random() * leaders.length)];
+    }
+
+    leader.setRole(ROLE.LEADER)
+
+    const players = getUsersInRoom(socket.gameRoom)
+    players.forEach(player => {
+        const userSocket = io.sockets.sockets.get(player.socketId);
+        if (userSocket) {
+            userSocket.emit('set-state-colony', getStateForUser(socket.colony, userSocket))
+        }
     });
 }
 
@@ -87,7 +145,7 @@ function joinRoom(socket, roomId) {
 
 const io = require("socket.io")(server, {
     cors: {
-        origin: "https://0weevh-95-191-10-201.ru.tuna.am",
+        origin: "https://ml7rda-95-191-10-201.ru.tuna.am",
         methods: ["GET", "POST"],
     },
 })
@@ -176,7 +234,13 @@ io.on('connection', socket => {
                 leaveRoom(socket, room)
                 joinRoom(socket, newRoomId)
 
-                io.to(socket.gameRoom).emit('set-state-colony', socket.colony.getStateColony());
+                const players = getUsersInRoom(socket.gameRoom)
+                players.forEach(player => {
+                    const userSocket = io.sockets.sockets.get(player.socketId);
+                    if (userSocket) {
+                        userSocket.emit('set-state-colony', getStateForUser(socket.colony, userSocket))
+                    }
+                });
                 room = newRoomId
             })
 
@@ -184,7 +248,7 @@ io.on('connection', socket => {
                 leaveRoom(socket, room)
             });
 
-            socket.on('activate-voting', () => {
+            socket.on('move-all-to-lobby', () => {
                 const colony = socket.colony;
                 const lobbyState = colony.getLobbyState();
 
@@ -193,9 +257,36 @@ io.on('connection', socket => {
                 leaveRoom(socket, room);
                 joinRoom(socket, lobbyState.id);
 
-                socket.emit('set-state-colony', colony.getStateColony());
-                socket.emit('restart-timer', 2, true)
+                socket.emit('set-state-colony', getStateForUser(colony, socket));
                 room = lobbyState.id;
+            })
+
+            socket.on('activate-voting', () => {
+                socket.emit('restart-timer', 2, true)
+            })
+
+            socket.on('vote', (userId) => {
+                const thisPlayer = socket.colony.getUser(socket.id);
+                if (thisPlayer.getIsVoted()) return;
+
+                const player = socket.colony.getUser(userId);
+                player.vote();
+
+                thisPlayer.setIsVoted(true);
+
+                const users = socket.colony.getUsers();
+                if (users.every(player => player.getIsVoted())) {
+                    endVoting(users, socket)
+                }
+            })
+
+            socket.on('end-voting', () => {
+                const players = getUsersInRoom(socket.gameRoom)
+                const users = socket.colony.getUsers();
+
+                if (socket.id === players[0].socketId) {
+                    endVoting(users, socket)
+                }
             })
 
             socket.on('create-game', async () => {
@@ -208,7 +299,6 @@ io.on('connection', socket => {
                 const colony = new Colony(apocalypse);
                 await colony.createUsers(users)
                 await colony.createRooms(room)
-                const stateColony = colony.getStateColony();
 
                 users.forEach(user => {
                     const userSocket = io.sockets.sockets.get(user.socketId);
@@ -217,23 +307,7 @@ io.on('connection', socket => {
                         userSocket.gameRoom = gameRoom;
                         userSocket.colony = colony;
 
-                        const userStateColony = {
-                            ...stateColony,
-                            users: stateColony.users.map(userState =>
-                                userState.id === user.socketId
-                                    ? userState
-                                    : {
-                                        ...userState,
-                                        characteristics: userState.characteristics.map(ch =>
-                                            !ch.isOpen
-                                                ? { ...ch, name: "Скрыто" }
-                                                : ch
-                                        )
-                                    }
-                            )
-                        };
-
-                        userSocket.emit('set-state-colony', userStateColony)
+                        userSocket.emit('set-state-colony', getStateForUser(colony, userSocket))
                     }
                 });
             })
